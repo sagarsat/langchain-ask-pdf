@@ -6,16 +6,17 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.chains.question_answering import load_qa_chain
 from langchain.llms import OpenAI
+from langchain.llms import AzureOpenAI
 from langchain.callbacks import get_openai_callback
 
 
 def main():
     load_dotenv()
-    st.set_page_config(page_title="Ask your PDF")
-    st.header("Ask your PDF 💬")
+    st.set_page_config(page_title="Carrier Gen AI: Ask your PDF")
+    st.header("Carrier Gen AI | Ask your PDF 💬")
     
     # upload file
-    pdf = st.file_uploader("Upload your PDF", type="pdf")
+    pdf = st.file_uploader("Upload your PDF here", type="pdf")
     
     # extract the text
     if pdf is not None:
@@ -34,7 +35,7 @@ def main():
       chunks = text_splitter.split_text(text)
       
       # create embeddings
-      embeddings = OpenAIEmbeddings()
+      embeddings = OpenAIEmbeddings(deployment="embedding-dev")
       knowledge_base = FAISS.from_texts(chunks, embeddings)
       
       # show user input
@@ -42,7 +43,8 @@ def main():
       if user_question:
         docs = knowledge_base.similarity_search(user_question)
         
-        llm = OpenAI()
+        #llm = OpenAI()
+        llm = AzureOpenAI(deployment_name="doc-search-gpt-35-dev",model_name="gpt-3.5-turbo")
         chain = load_qa_chain(llm, chain_type="stuff")
         with get_openai_callback() as cb:
           response = chain.run(input_documents=docs, question=user_question)
